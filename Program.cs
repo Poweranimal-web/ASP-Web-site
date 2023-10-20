@@ -63,6 +63,11 @@ static void Main(){
     var app = builder.Build();
     app.UseCors(myorigins);
     app.UseStaticFiles();
+    app.Map("/", async(context)=>{
+            var response = context.Response;
+            var request = context.Request;
+            await response.WriteAsync("Hello world!");
+    });
     app.Map("/reg", async(context)=>{
         var response = context.Response;
         var request = context.Request;
@@ -91,25 +96,24 @@ static void Main(){
         switch(request.Method){
             case "POST":
                 var person = await request.ReadFromJsonAsync<Person>();
-                Console.WriteLine($"{person.Email},{person.Password}");
                 bool exist_user = await Task.Run(()=>db.customer.Any(user => user.Email == $"{person.Email}" && user.Password == $"{person.Password}"));
                 switch(exist_user){
                     case true:
-                        Console.WriteLine("found");
                         feedback = new StatusResponse("good");
-                        // res = JsonSerializer.Serialize(feedback);
-                        await response.WriteAsJsonAsync(feedback, new JsonSerializerOptions() { IncludeFields = true});
+                        res = await Task.Run(()=>JsonSerializer.Serialize(feedback));
+                        await response.WriteAsJsonAsync(res);
                         break;
                     case false:
-                        Console.WriteLine("Not found");
                         feedback = new StatusResponse("not found");
-                        res = JsonSerializer.Serialize(feedback);
+                        res = await Task.Run(()=>JsonSerializer.Serialize(feedback));
                         await response.WriteAsJsonAsync(res);
                         break;
                 }
                 break;
+            case "GET":
+                await response.SendFileAsync("templates/login.html");
+                break;
         }
-        await response.SendFileAsync("templates/login.html");
         
     });
     app.Run();

@@ -21,7 +21,11 @@ async function validate(event){
                 throw new Error(`Error! status ${response.status}`);
             }
             else{
-                let data = response.json();
+                let data = await response.json();
+                data = JSON.parse(data);
+                if (data.Status=="good"){
+                    document.location.replace("/");
+                }    
             }
     
     
